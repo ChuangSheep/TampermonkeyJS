@@ -1,0 +1,41 @@
+div.googlecheck-check-sign {
+  position: relative;
+  font-size: medium;
+  display: inline-block;
+  padding: 0 0 0 10px;
+  width: 24px;
+  height: 24px;
+}
+
+.googlecheck-check-sign svg {
+    position: absolute;
+    bottom: -5px;
+}
+
+.googlecheck-tooltip {
+  visibility: hidden;
+  width: 400px;
+  min-height: 180px;
+  background-color: black;
+  color: #fff;
+  border-radius: 6px;
+  padding: 10px 10px 30px 10px;
+  
+  position: absolute;
+  z-index: 30;
+  top: -5px;
+  left: 105%;
+}
+
+.googlecheck-tooltip h4 {
+  padding: 7px 0;
+  margin: 0 0;
+}
+
+.googlecheck-tooltip-desc {
+  max-width: inherit;
+}
+
+.googlecheck-check-sign:hover .googlecheck-tooltip {
+  visibility: visible;
+}

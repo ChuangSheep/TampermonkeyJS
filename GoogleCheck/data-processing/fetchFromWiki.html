@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get List</title>
+</head>
+
+<style>
+  div {
+    margin: 30px 0;
+  }
+
+  form * {
+    display: block;
+    margin: 10px;
+  }
+</style>
+
+<script>
+  // Course List
+  var name = "", toDownload;
+</script>
+
+<script>
+  async function loadFile(file) {
+    if (file === undefined) return;
+
+    let t = await file.text();
+    return { name: file.name, text: t };
+  }
+
+  // https://stackoverflow.com/a/18197341/13053641
+  function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  }
+
+  function processFile(ps) {
+    // For Documentation/Annotation, see fixCourseList.py
+    // The logic is totally same
+    ps.then(function (res) {
+      name = res.name;
+      let text = res.text;
+      let html = document.createElement('html');
+      html.innerHTML = text;
+
+      let infosJSON = [];
+      let rows = html.querySelectorAll('tr[class^="s-"]');
+
+      for (let row of rows) {
+        let currentObj = {};
+        let subject = row.getAttribute("id").replaceAll("_", " ");
+        let status;
+        if (row.children[1].children[1] === undefined)
+          status = row.children[1].children[0].children[0].children[0].getAttribute("alt");
+        else status = row.children[1].children[1].children[0].children[0].getAttribute("alt");
+        let lastUpdate = row.children[3].getAttribute("data-sort-value");
+        let summary = row.children[4].innerHTML;
+        let linkList = getLinks(row.children[5])
+        currentObj.subject = subject.replace(/<[^>]*>/g, '').replace(/\n/g, '');
+        currentObj.status = status.replace(/\n/g, '');
+        currentObj.lastUpdate = lastUpdate.replace(/\n/g, '');
+        currentObj.summary = summary.replace(/<[^>]*>/g, '').replace(/\n/g, '');
+        currentObj.links = linkList;
+        infosJSON.push(currentObj);
+      }
+
+      toDownload = JSON.stringify(infosJSON);
+    })
+  }
+
+  function getLinks(tdNode) {
+    let processSingleNode = (n) => {
+      let href = n.getAttribute("href");
+      if (href.includes("target=https://")) {
+        let linkstart = href.lastIndexOf("https://");
+        return href.substring(linkstart);
+      }
+      return null;
+    };
+    let links = [];
+    for (let node of tdNode.children) {
+      if (node.nodeName.toLowerCase() === "a") {
+        links.push(processSingleNode(node));
+      }
+      else if (node.nodeName.toLowerCase() === "div") {
+        for (let inNode of node.children[2].children[1].children) {
+          if (inNode.nodeName.toLowerCase() === "a") {
+            links.push(processSingleNode(inNode));
+          }
+        }
+      }
+    }
+    return links.filter(Boolean);;
+  }
+
+  function getDownloadName() {
+    return Date.now().toString().substr(Date.now().toString().length - 4, 4) + 'FIXED-' + name + ".json";
+  }
+
+  function getDownloadContent() {
+    return toDownload;
+  }
+</script>
+
+<body>
+  <h1>Get List</h1>
+
+  <div>
+    <p><b>Choose a http file:</b></p>
+    <form>
+      <input type="file" onchange="processFile(loadFile(this.files[0]));">
+    </form>
+  </div>
+
+  <div>
+    <p><b>Click the following button to download the processed file:</b></p>
+    <button id="dl" onclick="download(getDownloadName(), getDownloadContent())">Download</button>
+  </div>
+
+</body>
+
+</html>
